@@ -14,7 +14,7 @@ const { simulateDataFluctuation } = require('./services/scoring.service');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE'], allowedHeaders: ['Content-Type', 'Authorization'] }));
+app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], allowedHeaders: ['Content-Type', 'Authorization'] }));
 app.use(express.json());
 
 // API Routes
@@ -30,12 +30,17 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString(), service: 'Smart Supply Chain Optimizer' });
 });
 
-// Real-time simulation: fluctuate risk scores every 8 seconds
-cron.schedule('*/8 * * * * *', () => {
-  simulateDataFluctuation();
-});
+// Only start server and cron when running directly (not imported by Vercel)
+if (require.main === module) {
+  cron.schedule('*/8 * * * * *', () => {
+    simulateDataFluctuation();
+  });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Smart Supply Chain Backend running on http://localhost:${PORT}`);
-  console.log(`📡 APIs: NewsAPI ✅ | Gemini AI ✅ | Weather: Open-Meteo ✅ (real-time) | Routing: OSRM (open-source) | Maps: Google (frontend)`);
-});
+  app.listen(PORT, () => {
+    console.log(`🚀 Smart Supply Chain Backend running on http://localhost:${PORT}`);
+    console.log(`📡 APIs: NewsAPI ✅ | Gemini AI ✅ | Weather: Open-Meteo ✅ (real-time) | Routing: OSRM (open-source) | Maps: Google (frontend)`);
+  });
+}
+
+// Export app for Vercel serverless
+module.exports = app;
